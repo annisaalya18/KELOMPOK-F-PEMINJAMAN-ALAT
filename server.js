@@ -2,6 +2,8 @@ const express = require('express');
 const cookieParser = require('cookie-parser');
 const crypto = require('crypto');
 const path = require('path');
+const fs = require('fs');
+const multer = require('multer');
 const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
@@ -13,6 +15,38 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Setup multer untuk upload foto
+const uploadsDir = path.join(__dirname, 'public', 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadsDir);
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + '-' + file.originalname);
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|gif/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+    if (mimetype && extname) {
+      return cb(null, true);
+    } else {
+      cb(new Error('Hanya file gambar yang diperbolehkan (jpeg, jpg, png, gif)'));
+    }
+  }
+});
+
+app.use('/uploads', express.static(uploadsDir));
 
 function makeToken() {
   return crypto.randomBytes(24).toString('hex');
@@ -224,6 +258,36 @@ app.put('/api/admin/inventaris/:id', authMiddleware('ADMIN'), async (req, res) =
   const id = parseInt(req.params.id, 10);
   const updated = await prisma.alat.update({ where: { id }, data: { nama, kategori, status } });
   res.json({ alat: updated });
+});
+
+app.post('/api/admin/inventaris/:id/upload-foto', authMiddleware('ADMIN'), upload.single('foto'), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'File foto wajib diupload.' });
+  }
+  
+  const id = parseInt(req.params.id, 10);
+  const alat = await prisma.alat.findUnique({ where: { id } });
+  if (!alat) {
+    // Hapus file jika alat tidak ditemukan
+    fs.unlinkSync(path.join(uploadsDir, req.file.filename));
+    return res.status(404).json({ error: 'Alat tidak ditemukan.' });
+  }
+
+  // Hapus foto lama jika ada
+  if (alat.foto) {
+    const oldFilePath = path.join(uploadsDir, alat.foto.split('/').pop());
+    if (fs.existsSync(oldFilePath)) {
+      fs.unlinkSync(oldFilePath);
+    }
+  }
+
+  const fotoPath = `/uploads/${req.file.filename}`;
+  const updated = await prisma.alat.update({
+    where: { id },
+    data: { foto: fotoPath }
+  });
+
+  res.json({ alat: updated, message: 'Foto berhasil diupload.' });
 });
 
 app.delete('/api/admin/inventaris/:id', authMiddleware('ADMIN'), async (req, res) => {

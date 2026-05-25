@@ -109,10 +109,24 @@
             <h2 class="text-xl font-semibold">CRUD Inventaris</h2>
             <form id="itemFormAdmin" class="space-y-4 mt-4">
               <input id="adminItemName" class="w-full rounded-2xl border border-slate-300 px-4 py-3" placeholder="Nama Alat" required />
+              <input id="adminItemCategory" class="w-full rounded-2xl border border-slate-300 px-4 py-3" placeholder="Kategori" required />
               <button type="submit" class="w-full rounded-2xl bg-blue-600 px-4 py-3 text-white hover:bg-blue-700">Tambah Alat</button>
             </form>
             <div id="adminInventory" class="mt-4 space-y-3 text-sm text-slate-700"></div>
           </article>
+          <article class="rounded-3xl bg-white p-6 shadow-sm">
+            <h2 class="text-xl font-semibold">Upload Foto Alat</h2>
+            <form id="photoFormAdmin" class="space-y-4 mt-4">
+              <select id="adminSelectItem" class="w-full rounded-2xl border border-slate-300 px-4 py-3" required>
+                <option value="">Pilih Alat</option>
+              </select>
+              <input id="adminPhotoInput" type="file" accept="image/*" class="w-full rounded-2xl border border-slate-300 px-4 py-3" required />
+              <button type="submit" class="w-full rounded-2xl bg-purple-600 px-4 py-3 text-white hover:bg-purple-700">Upload Foto</button>
+              <p id="photoFeedback" class="text-sm text-emerald-600 hidden">Foto berhasil diupload.</p>
+            </form>
+            <div id="adminPhotoList" class="mt-4 space-y-3 text-sm text-slate-700"></div>
+          </article>
+        </div>
           <article class="rounded-3xl bg-white p-6 shadow-sm">
             <h2 class="text-xl font-semibold">CRUD Jadwal</h2>
             <form id="scheduleFormAdmin" class="space-y-4 mt-4">
@@ -181,11 +195,17 @@
     const adminVerifications = document.getElementById('adminVerifications');
     const itemFormAdmin = document.getElementById('itemFormAdmin');
     const adminItemName = document.getElementById('adminItemName');
+    const adminItemCategory = document.getElementById('adminItemCategory');
     const scheduleFormAdmin = document.getElementById('scheduleFormAdmin');
     const adminScheduleDate = document.getElementById('adminScheduleDate');
     const adminScheduleLocation = document.getElementById('adminScheduleLocation');
     const adminScheduleSession = document.getElementById('adminScheduleSession');
     const adminSchedulePackage = document.getElementById('adminSchedulePackage');
+    const photoFormAdmin = document.getElementById('photoFormAdmin');
+    const adminSelectItem = document.getElementById('adminSelectItem');
+    const adminPhotoInput = document.getElementById('adminPhotoInput');
+    const photoFeedback = document.getElementById('photoFeedback');
+    const adminPhotoList = document.getElementById('adminPhotoList');
 
     function readStorage(key) {
       try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch (e) { return null; }
@@ -317,13 +337,56 @@
     itemFormAdmin.addEventListener('submit', (event) => {
       event.preventDefault();
       const name = adminItemName.value.trim();
-      if (!name) return;
+      const kategori = adminItemCategory.value.trim();
+      if (!name || !kategori) return;
       const items = readStorage(STORAGE.items) || [];
       const nextId = items.length ? Math.max(...items.map(i => i.id)) + 1 : 1;
-      items.unshift({ id: nextId, name, status: 'available' });
+      items.unshift({ id: nextId, name, kategori, status: 'available', foto: null });
       writeStorage(STORAGE.items, items);
       adminItemName.value = '';
-      renderAdminInventory(); renderAdminStats(); renderUserBorrowOptions(); renderAdminScheduleOptions();
+      adminItemCategory.value = '';
+      renderAdminInventory(); renderAdminStats(); renderUserBorrowOptions(); renderAdminScheduleOptions(); renderPhotoOptions();
+    });
+
+    photoFormAdmin.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const itemId = parseInt(adminSelectItem.value, 10);
+      const file = adminPhotoInput.files[0];
+      if (!itemId || !file) return;
+
+      const formData = new FormData();
+      formData.append('foto', file);
+
+      try {
+        const response = await fetch(`/api/admin/inventaris/${itemId}/upload-foto`, {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          alert('Error: ' + (error.error || 'Upload gagal'));
+          return;
+        }
+
+        const result = await response.json();
+        
+        // Update localStorage dengan foto
+        const items = readStorage(STORAGE.items) || [];
+        const item = items.find(i => i.id === itemId);
+        if (item) {
+          item.foto = result.alat.foto;
+          writeStorage(STORAGE.items, items);
+        }
+
+        photoFeedback.classList.remove('hidden');
+        setTimeout(() => photoFeedback.classList.add('hidden'), 2000);
+        photoFormAdmin.reset();
+        renderAdminInventory();
+        renderPhotoOptions();
+      } catch (error) {
+        alert('Error: ' + error.message);
+      }
     });
 
     scheduleFormAdmin.addEventListener('submit', (event) => {
@@ -351,7 +414,7 @@
       }
       if (user.role === 'admin') {
         showView('view-admin');
-        renderAdminStats(); renderAdminReports(); renderAdminInventory(); renderAdminSchedules(); renderAdminVerifications();
+        renderAdminStats(); renderAdminReports(); renderAdminInventory(); renderAdminSchedules(); renderAdminVerifications(); renderPhotoOptions(); renderPhotoList();
       } else {
         showView('view-user');
         renderUserDashboard();
@@ -449,12 +512,34 @@
         adminInventory.innerHTML = '<p class="text-sm text-slate-600">Inventaris kosong.</p>';
         return;
       }
-      adminInventory.innerHTML = items.map(item => `<div class="rounded-2xl border border-slate-200 p-4 bg-slate-50 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      adminInventory.innerHTML = items.map(item => `<div class="rounded-2xl border border-slate-200 p-4 bg-slate-50 flex flex-col gap-3">
+          ${item.foto ? `<img src="${safe(item.foto)}" alt="${safe(item.name)}" class="w-full h-40 object-cover rounded-xl">` : '<div class="w-full h-40 bg-slate-200 rounded-xl flex items-center justify-center text-slate-500">Belum ada foto</div>'}
           <div>
             <p class="font-semibold">${safe(item.name)}</p>
+            <p class="text-xs text-slate-600">Kategori: ${safe(item.kategori || '-')}</p>
             <p class="text-sm text-slate-600">Status: ${safe(item.status)}</p>
           </div>
-          <button class="rounded-2xl bg-red-600 px-4 py-2 text-white hover:bg-red-700" onclick="deleteItem(${item.id})">Hapus</button>
+          <div class="flex gap-2">
+            <button class="flex-1 rounded-2xl bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700" onclick="deleteItem(${item.id})">Hapus</button>
+          </div>
+        </div>`).join('');
+    }
+
+    function renderPhotoOptions() {
+      const items = readStorage(STORAGE.items) || [];
+      adminSelectItem.innerHTML = items.length ? items.map(item => `<option value="${item.id}">${safe(item.name)}</option>`).join('') : '<option value="">Tidak ada alat</option>';
+    }
+
+    function renderPhotoList() {
+      const items = readStorage(STORAGE.items) || [];
+      const itemsWithPhoto = items.filter(i => i.foto);
+      if (!itemsWithPhoto.length) {
+        adminPhotoList.innerHTML = '<p class="text-sm text-slate-600">Belum ada foto alat.</p>';
+        return;
+      }
+      adminPhotoList.innerHTML = itemsWithPhoto.map(item => `<div class="rounded-2xl border border-slate-200 p-3 bg-slate-50">
+          <img src="${safe(item.foto)}" alt="${safe(item.name)}" class="w-full h-32 object-cover rounded-lg mb-2">
+          <p class="font-semibold text-sm">${safe(item.name)}</p>
         </div>`).join('');
     }
 
@@ -490,7 +575,7 @@
       let items = readStorage(STORAGE.items) || [];
       items = items.filter(i => i.id !== id);
       writeStorage(STORAGE.items, items);
-      renderAdminInventory(); renderUserBorrowOptions(); renderAdminStats();
+      renderAdminInventory(); renderUserBorrowOptions(); renderAdminStats(); renderPhotoOptions(); renderPhotoList();
     }
 
     function deleteSchedule(id) {

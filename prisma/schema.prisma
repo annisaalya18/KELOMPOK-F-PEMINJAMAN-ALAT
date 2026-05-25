@@ -22,6 +22,7 @@ model Alat {
   nama        String
   kategori    String
   status      String       @default("TERSEDIA")
+  foto        String?
   jadwals     Jadwal[]
   borrowings  Peminjaman[]
 }
