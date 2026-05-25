@@ -1,0 +1,18 @@
+{
+  "name": "peminjaman-alat",
+  "version": "1.0.0",
+  "description": "Aplikasi manajemen peminjaman alat berbasis web dengan Node.js, Express, SQLite, Prisma, dan Tailwind CSS.",
+  "main": "server.js",
+  "scripts": {
+    "dev": "node server.js",
+    "prisma:migrate": "npx prisma migrate dev --name init",
+    "prisma:generate": "npx prisma generate"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.17.0",
+    "cookie-parser": "^1.4.7",
+    "express": "^4.18.2",
+    "prisma": "^5.17.0",
+    "sqlite3": "^5.1.6"
+  }
+}

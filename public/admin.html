@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard Admin - Peminjaman Alat</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 min-h-screen">
+  <header class="bg-white shadow-sm sticky top-0 z-10">
+    <div class="mx-auto max-w-7xl px-4 py-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+      <div>
+        <h1 class="text-2xl font-semibold text-slate-900">Dashboard Admin</h1>
+        <p class="mt-2 inline-flex items-center rounded-full bg-amber-100 px-3 py-1 text-sm font-medium text-amber-800">Role: Pengelola</p>
+        <p class="mt-3 text-sm text-slate-600">Kelola inventaris, jadwal, dan verifikasi peminjaman.</p>
+      </div>
+      <button id="logoutBtn" class="rounded-xl bg-rose-500 px-4 py-2 text-white hover:bg-rose-600">Keluar</button>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-7xl px-4 py-6 space-y-6">
+    <section class="grid gap-4 lg:grid-cols-3">
+      <article class="rounded-3xl bg-white p-6 shadow-sm">
+        <h2 class="text-lg font-semibold text-slate-900">Monitor Peminjaman</h2>
+        <div id="borrowingsList" class="mt-4 space-y-3 max-h-96 overflow-auto"></div>
+      </article>
+      <article class="rounded-3xl bg-white p-6 shadow-sm lg:col-span-2">
+        <h2 class="text-lg font-semibold text-slate-900">Laporan Kendala</h2>
+        <div id="reportsList" class="mt-4 space-y-3 max-h-96 overflow-auto"></div>
+      </article>
+    </section>
+
+    <section class="grid gap-4 lg:grid-cols-2">
+      <article class="rounded-3xl bg-white p-6 shadow-sm">
+        <h2 class="text-lg font-semibold text-slate-900">CRUD Inventaris</h2>
+        <form id="itemForm" class="space-y-4 mt-4">
+          <input type="hidden" id="itemId" />
+          <div>
+            <label class="block text-sm font-medium text-slate-700">Nama Alat</label>
+            <input id="itemName" class="mt-1 w-full rounded-xl border-gray-300 p-3 shadow-sm" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700">Kategori</label>
+            <input id="itemCategory" class="mt-1 w-full rounded-xl border-gray-300 p-3 shadow-sm" />
+          </div>
+          <div class="flex gap-3">
+            <button type="submit" class="rounded-xl bg-indigo-600 px-4 py-3 text-white hover:bg-indigo-700">Simpan</button>
+            <button type="button" id="clearItem" class="rounded-xl bg-slate-200 px-4 py-3 text-slate-700 hover:bg-slate-300">Bersihkan</button>
+          </div>
+        </form>
+        <div class="mt-6 space-y-3" id="itemTable"></div>
+      </article>
+      <article class="rounded-3xl bg-white p-6 shadow-sm">
+        <h2 class="text-lg font-semibold text-slate-900">CRUD Jadwal</h2>
+        <form id="scheduleForm" class="space-y-4 mt-4">
+          <input type="hidden" id="scheduleId" />
+          <div>
+            <label class="block text-sm font-medium text-slate-700">Tanggal</label>
+            <input id="scheduleDate" type="date" class="mt-1 w-full rounded-xl border-gray-300 p-3 shadow-sm" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700">Lokasi</label>
+            <input id="scheduleLocation" class="mt-1 w-full rounded-xl border-gray-300 p-3 shadow-sm" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700">Sesi</label>
+            <input id="scheduleSession" class="mt-1 w-full rounded-xl border-gray-300 p-3 shadow-sm" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700">Paket Nomor</label>
+            <input id="schedulePackage" class="mt-1 w-full rounded-xl border-gray-300 p-3 shadow-sm" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700">Alat</label>
+            <select id="scheduleAlat" class="mt-1 w-full rounded-xl border-gray-300 p-3 shadow-sm"></select>
+          </div>
+          <div class="flex gap-3">
+            <button type="submit" class="rounded-xl bg-indigo-600 px-4 py-3 text-white hover:bg-indigo-700">Simpan</button>
+            <button type="button" id="clearSchedule" class="rounded-xl bg-slate-200 px-4 py-3 text-slate-700 hover:bg-slate-300">Bersihkan</button>
+          </div>
+        </form>
+        <div class="mt-6 space-y-3" id="scheduleTable"></div>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    const logoutBtn = document.getElementById('logoutBtn');
+    const borrowingsList = document.getElementById('borrowingsList');
+    const reportsList = document.getElementById('reportsList');
+    const itemForm = document.getElementById('itemForm');
+    const itemId = document.getElementById('itemId');
+    const itemName = document.getElementById('itemName');
+    const itemCategory = document.getElementById('itemCategory');
+    const clearItem = document.getElementById('clearItem');
+    const itemTable = document.getElementById('itemTable');
+    const scheduleForm = document.getElementById('scheduleForm');
+    const scheduleId = document.getElementById('scheduleId');
+    const scheduleDate = document.getElementById('scheduleDate');
+    const scheduleLocation = document.getElementById('scheduleLocation');
+    const scheduleSession = document.getElementById('scheduleSession');
+    const schedulePackage = document.getElementById('schedulePackage');
+    const scheduleAlat = document.getElementById('scheduleAlat');
+    const clearSchedule = document.getElementById('clearSchedule');
+    const scheduleTable = document.getElementById('scheduleTable');
+
+    logoutBtn.addEventListener('click', async () => {
+      await fetch('/api/logout', { method: 'POST' });
+      window.location.href = '/login';
+    });
+
+    itemForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const name = itemName.value.trim();
+      const category = itemCategory.value.trim();
+      if (!name || !category) return;
+      const method = itemId.value ? 'PUT' : 'POST';
+      const url = `/api/admin/inventaris${itemId.value ? '/' + itemId.value : ''}`;
+      await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nama: name, kategori: category }) });
+      itemForm.reset();
+      loadAdminData();
+    });
+
+    scheduleForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const data = {
+        tanggal: scheduleDate.value,
+        lokasi: scheduleLocation.value.trim(),
+        sesi: scheduleSession.value.trim(),
+        paketNomor: schedulePackage.value.trim(),
+        alatId: scheduleAlat.value
+      };
+      if (!data.tanggal || !data.lokasi || !data.sesi || !data.paketNomor || !data.alatId) return;
+      const method = scheduleId.value ? 'PUT' : 'POST';
+      const url = `/api/admin/jadwal${scheduleId.value ? '/' + scheduleId.value : ''}`;
+      await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+      scheduleForm.reset();
+      loadAdminData();
+    });
+
+    clearItem.addEventListener('click', () => itemForm.reset());
+    clearSchedule.addEventListener('click', () => scheduleForm.reset());
+
+    async function loadAdminData() {
+      await Promise.all([loadDashboard(), loadInventory(), loadSchedule()]);
+    }
+
+    async function loadDashboard() {
+      const response = await fetch('/api/admin/dashboard');
+      if (response.status === 401) { window.location.href = '/login'; return; }
+      const data = await response.json();
+      renderBorrowings(data.allBorrowings);
+      renderReports(data.reports);
+    }
+
+    async function loadInventory() {
+      const response = await fetch('/api/admin/inventaris');
+      const data = await response.json();
+      renderInventory(data.alat);
+      populateScheduleAlat(data.alat);
+    }
+
+    async function loadSchedule() {
+      const response = await fetch('/api/admin/jadwal');
+      const data = await response.json();
+      renderScheduleTable(data.jadwals);
+    }
+
+    function renderBorrowings(items) {
+      borrowingsList.innerHTML = items.length ? items.map(item => `
+        <div class="rounded-3xl border border-slate-200 p-4 bg-slate-50">
+          <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h3 class="font-semibold text-slate-900">${item.alat.nama}</h3>
+              <p class="text-sm text-slate-600">${item.user.name} • ${item.user.email}</p>
+              <p class="text-sm text-slate-600">${new Date(item.jadwal.tanggal).toLocaleDateString()} ${item.jadwal.sesi}</p>
+              <p class="text-sm text-slate-600">Status: ${item.status}</p>
+            </div>
+            <button onclick="verifyBorrowing(${item.id})" class="rounded-xl bg-emerald-600 px-4 py-2 text-white hover:bg-emerald-700">Verifikasi Selesai</button>
+          </div>
+        </div>
+      `).join('') : '<p class="text-slate-600">Tidak ada data peminjaman.</p>';
+    }
+
+    function renderReports(items) {
+      reportsList.innerHTML = items.length ? items.map(report => `
+        <div class="rounded-3xl border border-slate-200 p-4 bg-slate-50">
+          <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h3 class="font-semibold text-slate-900">${report.user.name}</h3>
+              <p class="text-sm text-slate-600">${report.pesan}</p>
+              <p class="text-sm text-slate-600">Alat: ${report.peminjaman.alat.nama} • ${new Date(report.createdAt).toLocaleString()}</p>
+            </div>
+            <span class="rounded-full bg-amber-100 px-3 py-1 text-sm font-semibold text-amber-700">Menunggu</span>
+          </div>
+        </div>
+      `).join('') : '<p class="text-slate-600">Tidak ada laporan kendala baru.</p>';
+    }
+
+    function renderInventory(items) {
+      itemTable.innerHTML = items.length ? items.map(item => `
+        <div class="rounded-3xl border border-slate-200 p-4 bg-slate-50 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 class="font-semibold text-slate-900">${item.nama}</h3>
+            <p class="text-sm text-slate-600">Kategori: ${item.kategori}</p>
+            <p class="text-sm text-slate-600">Status: ${item.status}</p>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="editItem(${item.id}, '${item.nama}', '${item.kategori}')" class="rounded-xl bg-sky-600 px-4 py-2 text-white hover:bg-sky-700">Edit</button>
+            <button onclick="deleteItem(${item.id})" class="rounded-xl bg-rose-600 px-4 py-2 text-white hover:bg-rose-700">Hapus</button>
+          </div>
+        </div>
+      `).join('') : '<p class="text-slate-600">Belum ada inventaris.</p>';
+    }
+
+    function populateScheduleAlat(items) {
+      scheduleAlat.innerHTML = items.length ? items.map(item => `<option value="${item.id}">${item.nama}</option>`).join('') : '<option value="">Tidak ada alat</option>';
+    }
+
+    function renderScheduleTable(items) {
+      scheduleTable.innerHTML = items.length ? items.map(item => `
+        <div class="rounded-3xl border border-slate-200 p-4 bg-slate-50 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 class="font-semibold text-slate-900">${item.alat.nama}</h3>
+            <p class="text-sm text-slate-600">${new Date(item.tanggal).toLocaleDateString()} ${item.sesi}</p>
+            <p class="text-sm text-slate-600">Lokasi: ${item.lokasi} • Paket: ${item.paketNomor}</p>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="editSchedule(${item.id}, '${item.tanggal.substring(0, 10)}', '${item.lokasi}', '${item.sesi}', '${item.paketNomor}', ${item.alatId})" class="rounded-xl bg-sky-600 px-4 py-2 text-white hover:bg-sky-700">Edit</button>
+            <button onclick="deleteSchedule(${item.id})" class="rounded-xl bg-rose-600 px-4 py-2 text-white hover:bg-rose-700">Hapus</button>
+          </div>
+        </div>
+      `).join('') : '<p class="text-slate-600">Belum ada jadwal.</p>';
+    }
+
+    async function editItem(id, name, category) {
+      itemId.value = id;
+      itemName.value = name;
+      itemCategory.value = category;
+    }
+
+    async function deleteItem(id) {
+      if (!confirm('Hapus inventaris ini?')) return;
+      await fetch(`/api/admin/inventaris/${id}`, { method: 'DELETE' });
+      loadAdminData();
+    }
+
+    async function editSchedule(id, date, lokasi, sesi, paketNomor, alatId) {
+      scheduleId.value = id;
+      scheduleDate.value = date;
+      scheduleLocation.value = lokasi;
+      scheduleSession.value = sesi;
+      schedulePackage.value = paketNomor;
+      scheduleAlat.value = alatId;
+    }
+
+    async function deleteSchedule(id) {
+      if (!confirm('Hapus jadwal ini?')) return;
+      await fetch(`/api/admin/jadwal/${id}`, { method: 'DELETE' });
+      loadAdminData();
+    }
+
+    async function verifyBorrowing(id) {
+      await fetch(`/api/admin/verify/${id}`, { method: 'POST' });
+      loadAdminData();
+    }
+
+    loadAdminData();
+    setInterval(loadDashboard, 5000);
+  </script>
+</body>
+</html>
