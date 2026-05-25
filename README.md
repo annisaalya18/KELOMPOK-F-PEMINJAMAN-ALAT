@@ -44,4 +44,4 @@ Aplikasi ini menggunakan:
 ## Catatan
 
 - Database SQLite tersimpan di `prisma/dev.db`
-- Jika `dev.db` belum dibuat maka `npm run prisma:migrate` akan membuatnya
+- Jika `dev.db` belum dibuat maka `npm run prisma:migrate` akan membuatnya 
