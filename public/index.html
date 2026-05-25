@@ -3,10 +3,643 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Redirect ke Login</title>
-  <script>window.location.href='login.html';</script>
+  <title>Manajemen Peminjaman Alat</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-50 min-h-screen flex items-center justify-center">
-  <p class="text-slate-700">Mengalihkan ke <a href="login.html" class="text-indigo-600 underline">login.html</a>...</p>
+<body class="bg-slate-50">
+  <!-- LOGIN PAGE -->
+  <div id="loginPage" class="min-h-screen flex items-center justify-center px-4">
+    <div class="max-w-md w-full bg-white rounded-3xl shadow-xl p-8 space-y-8">
+      <div class="text-center">
+        <h1 class="text-3xl font-bold text-slate-900">Peminjaman Alat</h1>
+        <p class="mt-2 text-slate-600 text-sm">Sistem Manajemen Peminjaman Alat</p>
+      </div>
+      <form id="loginForm" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Username</label>
+          <input id="loginUsername" type="text" required class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="admin atau user" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Password</label>
+          <input id="loginPassword" type="password" required class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="••••••••" />
+        </div>
+        <button type="submit" class="w-full bg-indigo-600 text-white font-semibold py-2 rounded-lg hover:bg-indigo-700 transition">Masuk</button>
+        <p id="loginError" class="text-sm text-red-600 text-center"></p>
+      </form>
+      <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-slate-700 space-y-1">
+        <p class="font-semibold text-blue-900">Demo Akun:</p>
+        <p><strong>Admin:</strong> admin / admin</p>
+        <p><strong>User:</strong> user / user</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- USER PAGE -->
+  <div id="userPage" class="hidden min-h-screen bg-slate-50">
+    <header class="bg-white shadow-sm sticky top-0 z-10">
+      <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-bold text-slate-900">Dashboard Peminjam</h1>
+          <p class="text-sm text-slate-600">Selamat datang, <span id="userNameDisplay">User</span></p>
+        </div>
+        <button id="userLogoutBtn" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm font-medium">Sign Out</button>
+      </div>
+    </header>
+    <main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+      <section class="grid gap-4 lg:grid-cols-3">
+        <article class="bg-white rounded-2xl p-6 shadow-sm">
+          <h2 class="text-lg font-semibold text-slate-900 mb-4">Peminjaman Aktif</h2>
+          <div id="userActiveBorrowings" class="space-y-3 max-h-60 overflow-auto text-sm text-slate-600">Tidak ada peminjaman aktif</div>
+        </article>
+        <article class="bg-white rounded-2xl p-6 shadow-sm lg:col-span-2">
+          <h2 class="text-lg font-semibold text-slate-900 mb-4">Jadwal Tersedia</h2>
+          <div id="userScheduleList" class="space-y-3 max-h-60 overflow-auto text-sm text-slate-600">Belum ada jadwal</div>
+        </article>
+      </section>
+      <section class="grid gap-4 lg:grid-cols-2">
+        <article class="bg-white rounded-2xl p-6 shadow-sm">
+          <h2 class="text-lg font-semibold text-slate-900 mb-4">Form Bukti Peminjaman</h2>
+          <form id="borrowingForm" class="space-y-3">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">Pilih Jadwal</label>
+              <select id="borrowingScheduleId" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" required>
+                <option value="">-- Pilih Jadwal --</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">Bukti Peminjaman</label>
+              <input id="borrowingProof" type="text" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" placeholder="Foto/Tanda tangan/Catatan" required />
+            </div>
+            <button type="submit" class="w-full bg-indigo-600 text-white font-semibold py-2 rounded-lg hover:bg-indigo-700 transition text-sm">Ajukan Peminjaman</button>
+          </form>
+        </article>
+        <article class="bg-white rounded-2xl p-6 shadow-sm">
+          <h2 class="text-lg font-semibold text-slate-900 mb-4">Lapor Kendala</h2>
+          <form id="reportForm" class="space-y-3">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">Pilih Peminjaman Aktif</label>
+              <select id="reportPeminjamanId" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" required>
+                <option value="">-- Pilih Peminjaman --</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">Pesan Kendala</label>
+              <textarea id="reportMessage" rows="3" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" placeholder="Jelaskan kendala..." required></textarea>
+            </div>
+            <button type="submit" class="w-full bg-yellow-600 text-white font-semibold py-2 rounded-lg hover:bg-yellow-700 transition text-sm">Kirim Laporan</button>
+          </form>
+        </article>
+      </section>
+      <article class="bg-white rounded-2xl p-6 shadow-sm">
+        <h2 class="text-lg font-semibold text-slate-900 mb-4">Riwayat Peminjaman</h2>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm text-left text-slate-700">
+            <thead class="bg-slate-100 border-b border-slate-200">
+              <tr>
+                <th class="px-4 py-2">Alat</th>
+                <th class="px-4 py-2">Jadwal</th>
+                <th class="px-4 py-2">Status</th>
+                <th class="px-4 py-2">Bukti Pinjam</th>
+                <th class="px-4 py-2">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="userHistoryTable" class="divide-y divide-slate-200">
+              <tr><td colspan="5" class="px-4 py-2 text-center text-slate-600">Belum ada riwayat</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+    </main>
+  </div>
+
+  <!-- ADMIN PAGE -->
+  <div id="adminPage" class="hidden min-h-screen bg-slate-50">
+    <header class="bg-white shadow-sm sticky top-0 z-10">
+      <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-bold text-slate-900">Dashboard Admin</h1>
+          <p class="text-sm text-slate-600">Selamat datang, <span id="adminNameDisplay">Admin</span></p>
+        </div>
+        <button id="adminLogoutBtn" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm font-medium">Sign Out</button>
+      </div>
+    </header>
+    <main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+      <section class="grid gap-4 lg:grid-cols-3">
+        <div class="bg-white rounded-2xl p-6 shadow-sm">
+          <p class="text-sm text-slate-600">Total Alat</p>
+          <p class="text-3xl font-bold text-indigo-600 mt-2" id="adminTotalItems">0</p>
+        </div>
+        <div class="bg-white rounded-2xl p-6 shadow-sm">
+          <p class="text-sm text-slate-600">Sedang Dipinjam</p>
+          <p class="text-3xl font-bold text-yellow-600 mt-2" id="adminBorrowedCount">0</p>
+        </div>
+        <div class="bg-white rounded-2xl p-6 shadow-sm">
+          <p class="text-sm text-slate-600">Laporan Kendala</p>
+          <p class="text-3xl font-bold text-red-600 mt-2" id="adminReportCount">0</p>
+        </div>
+      </section>
+      <section class="grid gap-4 lg:grid-cols-2">
+        <article class="bg-white rounded-2xl p-6 shadow-sm">
+          <h2 class="text-lg font-semibold text-slate-900 mb-4">Kelola Inventaris</h2>
+          <form id="adminItemForm" class="space-y-3 mb-6">
+            <input type="hidden" id="adminItemId" />
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">Nama Alat</label>
+              <input id="adminItemName" type="text" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" placeholder="Contoh: Proyektor" required />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">Status</label>
+              <select id="adminItemStatus" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                <option value="TERSEDIA">TERSEDIA</option>
+                <option value="DIPINJAM">DIPINJAM</option>
+              </select>
+            </div>
+            <div class="flex gap-2">
+              <button type="submit" class="flex-1 bg-indigo-600 text-white font-semibold py-2 rounded-lg hover:bg-indigo-700 transition text-sm">Simpan Alat</button>
+              <button type="button" id="adminItemClear" class="flex-1 bg-slate-300 text-slate-700 font-semibold py-2 rounded-lg hover:bg-slate-400 transition text-sm">Bersihkan</button>
+            </div>
+          </form>
+          <div id="adminItemList" class="space-y-2 max-h-80 overflow-auto text-sm text-slate-600">Belum ada alat</div>
+        </article>
+        <article class="bg-white rounded-2xl p-6 shadow-sm">
+          <h2 class="text-lg font-semibold text-slate-900 mb-4">Kelola Jadwal Peminjaman</h2>
+          <form id="adminScheduleForm" class="space-y-3 mb-6">
+            <input type="hidden" id="adminScheduleId" />
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">Tanggal</label>
+              <input id="adminScheduleDate" type="date" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" required />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">Lokasi</label>
+              <input id="adminScheduleLocation" type="text" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" placeholder="Ruang Lab" required />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">Sesi</label>
+              <input id="adminScheduleSession" type="text" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" placeholder="08:00 - 10:00" required />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">Paket Nomor</label>
+              <input id="adminSchedulePackage" type="text" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" placeholder="PKG-001" required />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">Alat</label>
+              <select id="adminScheduleItemId" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" required>
+                <option value="">-- Pilih Alat --</option>
+              </select>
+            </div>
+            <div class="flex gap-2">
+              <button type="submit" class="flex-1 bg-indigo-600 text-white font-semibold py-2 rounded-lg hover:bg-indigo-700 transition text-sm">Simpan Jadwal</button>
+              <button type="button" id="adminScheduleClear" class="flex-1 bg-slate-300 text-slate-700 font-semibold py-2 rounded-lg hover:bg-slate-400 transition text-sm">Bersihkan</button>
+            </div>
+          </form>
+          <div id="adminScheduleList" class="space-y-2 max-h-80 overflow-auto text-sm text-slate-600">Belum ada jadwal</div>
+        </article>
+      </section>
+      <section class="grid gap-4 lg:grid-cols-2">
+        <article class="bg-white rounded-2xl p-6 shadow-sm">
+          <h2 class="text-lg font-semibold text-slate-900 mb-4">Peminjaman Aktif</h2>
+          <div id="adminBorrowingsList" class="space-y-2 max-h-80 overflow-auto text-sm text-slate-600">Tidak ada peminjaman aktif</div>
+        </article>
+        <article class="bg-white rounded-2xl p-6 shadow-sm">
+          <h2 class="text-lg font-semibold text-slate-900 mb-4">Laporan Kendala</h2>
+          <div id="adminReportsList" class="space-y-2 max-h-80 overflow-auto text-sm text-slate-600">Tidak ada laporan kendala</div>
+        </article>
+      </section>
+      <article class="bg-white rounded-2xl p-6 shadow-sm">
+        <h2 class="text-lg font-semibold text-slate-900 mb-4">Verifikasi Pengembalian</h2>
+        <div id="adminVerificationsList" class="space-y-2 max-h-80 overflow-auto text-sm text-slate-600">Tidak ada pengembalian menunggu verifikasi</div>
+      </article>
+    </main>
+  </div>
+
+  <script>
+    const storage = {
+      users: [
+        { id: 1, username: 'admin', password: 'admin', role: 'ADMIN' },
+        { id: 2, username: 'user', password: 'user', role: 'USER' }
+      ],
+      items: [],
+      schedules: [],
+      borrowings: [],
+      reports: [],
+      nextItemId: 1,
+      nextScheduleId: 1,
+      nextBorrowingId: 1,
+      nextReportId: 1,
+      currentUser: null
+    };
+
+    function loadStorage() {
+      const saved = localStorage.getItem('peminjamanAlat');
+      if (saved) Object.assign(storage, JSON.parse(saved));
+      else saveStorage();
+    }
+
+    function saveStorage() {
+      localStorage.setItem('peminjamanAlat', JSON.stringify(storage));
+    }
+
+    document.getElementById('loginForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const username = document.getElementById('loginUsername').value.trim();
+      const password = document.getElementById('loginPassword').value.trim();
+      const user = storage.users.find(u => u.username === username && u.password === password);
+      if (!user) {
+        document.getElementById('loginError').textContent = 'Username atau password salah!';
+        return;
+      }
+      storage.currentUser = user;
+      saveStorage();
+      user.role === 'ADMIN' ? showAdminPage() : showUserPage();
+    });
+
+    function showLoginPage() {
+      document.getElementById('loginPage').classList.remove('hidden');
+      document.getElementById('userPage').classList.add('hidden');
+      document.getElementById('adminPage').classList.add('hidden');
+    }
+
+    function showUserPage() {
+      document.getElementById('loginPage').classList.add('hidden');
+      document.getElementById('userPage').classList.remove('hidden');
+      document.getElementById('adminPage').classList.add('hidden');
+      document.getElementById('userNameDisplay').textContent = storage.currentUser.username;
+      renderUserDashboard();
+    }
+
+    function showAdminPage() {
+      document.getElementById('loginPage').classList.add('hidden');
+      document.getElementById('userPage').classList.add('hidden');
+      document.getElementById('adminPage').classList.remove('hidden');
+      document.getElementById('adminNameDisplay').textContent = storage.currentUser.username;
+      renderAdminDashboard();
+    }
+
+    document.getElementById('userLogoutBtn').addEventListener('click', () => {
+      storage.currentUser = null;
+      saveStorage();
+      showLoginPage();
+    });
+
+    document.getElementById('adminLogoutBtn').addEventListener('click', () => {
+      storage.currentUser = null;
+      saveStorage();
+      showLoginPage();
+    });
+
+    document.getElementById('adminItemForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const id = document.getElementById('adminItemId').value;
+      const name = document.getElementById('adminItemName').value.trim();
+      const status = document.getElementById('adminItemStatus').value;
+      if (id) {
+        const item = storage.items.find(i => i.id == id);
+        if (item) { item.nama = name; item.status = status; }
+      } else {
+        storage.items.push({ id: storage.nextItemId++, nama: name, status: status });
+      }
+      saveStorage();
+      document.getElementById('adminItemForm').reset();
+      document.getElementById('adminItemId').value = '';
+      renderAdminItems();
+      updateScheduleItemSelect();
+    });
+
+    document.getElementById('adminItemClear').addEventListener('click', () => {
+      document.getElementById('adminItemForm').reset();
+      document.getElementById('adminItemId').value = '';
+    });
+
+    function renderAdminItems() {
+      const container = document.getElementById('adminItemList');
+      if (storage.items.length === 0) {
+        container.innerHTML = '<p class="text-slate-600 text-sm">Belum ada alat</p>';
+        return;
+      }
+      container.innerHTML = storage.items.map(item => `
+        <div class="border border-slate-200 rounded-lg p-3 flex items-center justify-between bg-slate-50">
+          <div><p class="font-semibold text-slate-900 text-sm">${item.nama}</p>
+          <p class="text-xs text-slate-600">Status: <span class="font-medium ${item.status === 'TERSEDIA' ? 'text-green-600' : 'text-yellow-600'}">${item.status}</span></p></div>
+          <div class="flex gap-2">
+            <button onclick="editAdminItem(${item.id})" class="px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600">Edit</button>
+            <button onclick="deleteAdminItem(${item.id})" class="px-2 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600">Hapus</button>
+          </div>
+        </div>
+      `).join('');
+      document.getElementById('adminTotalItems').textContent = storage.items.length;
+    }
+
+    function editAdminItem(id) {
+      const item = storage.items.find(i => i.id === id);
+      if (item) {
+        document.getElementById('adminItemId').value = item.id;
+        document.getElementById('adminItemName').value = item.nama;
+        document.getElementById('adminItemStatus').value = item.status;
+      }
+    }
+
+    function deleteAdminItem(id) {
+      if (confirm('Hapus alat ini?')) {
+        storage.items = storage.items.filter(i => i.id !== id);
+        saveStorage();
+        renderAdminItems();
+      }
+    }
+
+    document.getElementById('adminScheduleForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const id = document.getElementById('adminScheduleId').value;
+      const date = document.getElementById('adminScheduleDate').value;
+      const location = document.getElementById('adminScheduleLocation').value.trim();
+      const session = document.getElementById('adminScheduleSession').value.trim();
+      const pkg = document.getElementById('adminSchedulePackage').value.trim();
+      const itemId = document.getElementById('adminScheduleItemId').value;
+      if (!itemId) { alert('Pilih alat terlebih dahulu!'); return; }
+      if (id) {
+        const schedule = storage.schedules.find(s => s.id == id);
+        if (schedule) { schedule.tanggal = date; schedule.lokasi = location; schedule.sesi = session; schedule.paketNomor = pkg; schedule.itemId = parseInt(itemId); }
+      } else {
+        storage.schedules.push({ id: storage.nextScheduleId++, tanggal: date, lokasi: location, sesi: session, paketNomor: pkg, itemId: parseInt(itemId) });
+      }
+      saveStorage();
+      document.getElementById('adminScheduleForm').reset();
+      document.getElementById('adminScheduleId').value = '';
+      renderAdminSchedules();
+      renderUserSchedules();
+    });
+
+    document.getElementById('adminScheduleClear').addEventListener('click', () => {
+      document.getElementById('adminScheduleForm').reset();
+      document.getElementById('adminScheduleId').value = '';
+    });
+
+    function updateScheduleItemSelect() {
+      const select = document.getElementById('adminScheduleItemId');
+      select.innerHTML = '<option value="">-- Pilih Alat --</option>' + storage.items.map(item => `<option value="${item.id}">${item.nama}</option>`).join('');
+    }
+
+    function renderAdminSchedules() {
+      const container = document.getElementById('adminScheduleList');
+      if (storage.schedules.length === 0) {
+        container.innerHTML = '<p class="text-slate-600 text-sm">Belum ada jadwal</p>';
+        return;
+      }
+      container.innerHTML = storage.schedules.map(schedule => {
+        const item = storage.items.find(i => i.id === schedule.itemId);
+        return `
+          <div class="border border-slate-200 rounded-lg p-3 bg-slate-50">
+            <p class="font-semibold text-slate-900 text-sm">${item ? item.nama : 'Alat Tidak Ditemukan'}</p>
+            <p class="text-xs text-slate-600">Tanggal: ${schedule.tanggal} | Sesi: ${schedule.sesi}</p>
+            <p class="text-xs text-slate-600">Lokasi: ${schedule.lokasi} | Paket: ${schedule.paketNomor}</p>
+            <div class="flex gap-2 mt-2">
+              <button onclick="editAdminSchedule(${schedule.id})" class="px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600">Edit</button>
+              <button onclick="deleteAdminSchedule(${schedule.id})" class="px-2 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600">Hapus</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function editAdminSchedule(id) {
+      const schedule = storage.schedules.find(s => s.id === id);
+      if (schedule) {
+        document.getElementById('adminScheduleId').value = schedule.id;
+        document.getElementById('adminScheduleDate').value = schedule.tanggal;
+        document.getElementById('adminScheduleLocation').value = schedule.lokasi;
+        document.getElementById('adminScheduleSession').value = schedule.sesi;
+        document.getElementById('adminSchedulePackage').value = schedule.paketNomor;
+        document.getElementById('adminScheduleItemId').value = schedule.itemId;
+      }
+    }
+
+    function deleteAdminSchedule(id) {
+      if (confirm('Hapus jadwal ini?')) {
+        storage.schedules = storage.schedules.filter(s => s.id !== id);
+        saveStorage();
+        renderAdminSchedules();
+      }
+    }
+
+    document.getElementById('borrowingForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const scheduleId = document.getElementById('borrowingScheduleId').value;
+      const proof = document.getElementById('borrowingProof').value.trim();
+      if (!scheduleId) { alert('Pilih jadwal terlebih dahulu!'); return; }
+      storage.borrowings.push({
+        id: storage.nextBorrowingId++,
+        userId: storage.currentUser.id,
+        scheduleId: parseInt(scheduleId),
+        status: 'AKTIF',
+        buktiPinjam: proof,
+        buktiKembali: '',
+        tanggalPinjam: new Date().toISOString()
+      });
+      saveStorage();
+      document.getElementById('borrowingForm').reset();
+      renderUserDashboard();
+    });
+
+    document.getElementById('reportForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const peminjamanId = document.getElementById('reportPeminjamanId').value;
+      const message = document.getElementById('reportMessage').value.trim();
+      if (!peminjamanId || !message) { alert('Isi semua data!'); return; }
+      storage.reports.push({
+        id: storage.nextReportId++,
+        userId: storage.currentUser.id,
+        peminjamanId: parseInt(peminjamanId),
+        pesan: message,
+        status: 'PENDING',
+        tanggal: new Date().toISOString()
+      });
+      saveStorage();
+      document.getElementById('reportForm').reset();
+      renderUserDashboard();
+      alert('Laporan berhasil dikirim!');
+    });
+
+    function returnBorrowing(borrowingId) {
+      const proof = prompt('Masukkan bukti pengembalian:');
+      if (!proof) return;
+      const borrowing = storage.borrowings.find(b => b.id === borrowingId);
+      if (borrowing) {
+        borrowing.buktiKembali = proof;
+        borrowing.status = 'MENUNGGU_VERIFIKASI';
+        saveStorage();
+        renderUserDashboard();
+      }
+    }
+
+    function verifyReturn(borrowingId) {
+      const borrowing = storage.borrowings.find(b => b.id === borrowingId);
+      if (borrowing) {
+        borrowing.status = 'SELESAI';
+        const schedule = storage.schedules.find(s => s.id === borrowing.scheduleId);
+        if (schedule) {
+          const item = storage.items.find(i => i.id === schedule.itemId);
+          if (item) item.status = 'TERSEDIA';
+        }
+        saveStorage();
+        renderAdminDashboard();
+      }
+    }
+
+    function renderUserDashboard() {
+      renderUserActiveBorrowings();
+      renderUserSchedules();
+      renderUserHistory();
+      updateBorrowingForm();
+      updateReportForm();
+    }
+
+    function renderUserActiveBorrowings() {
+      const container = document.getElementById('userActiveBorrowings');
+      const active = storage.borrowings.filter(b => b.userId === storage.currentUser.id && b.status === 'AKTIF');
+      if (active.length === 0) {
+        container.innerHTML = '<p class="text-slate-600 text-sm">Tidak ada peminjaman aktif</p>';
+        return;
+      }
+      container.innerHTML = active.map(b => {
+        const schedule = storage.schedules.find(s => s.id === b.scheduleId);
+        const item = schedule ? storage.items.find(i => i.id === schedule.itemId) : null;
+        return `<div class="border-l-4 border-yellow-500 bg-yellow-50 p-3 rounded">
+          <p class="font-semibold text-slate-900 text-sm">${item ? item.nama : 'Alat'}</p>
+          <p class="text-xs text-slate-600">${schedule ? `${schedule.tanggal} | ${schedule.sesi}` : '-'}</p>
+          <p class="text-xs text-slate-600">Bukti: ${b.buktiPinjam}</p>
+          <button onclick="returnBorrowing(${b.id})" class="mt-2 px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700">Kembalikan</button>
+        </div>`;
+      }).join('');
+    }
+
+    function renderUserSchedules() {
+      const container = document.getElementById('userScheduleList');
+      if (storage.schedules.length === 0) {
+        container.innerHTML = '<p class="text-slate-600 text-sm">Belum ada jadwal</p>';
+        return;
+      }
+      container.innerHTML = storage.schedules.map(schedule => {
+        const item = storage.items.find(i => i.id === schedule.itemId);
+        return `<div class="border border-slate-200 rounded-lg p-3 bg-white">
+          <p class="font-semibold text-slate-900 text-sm">${item ? item.nama : 'Alat'}</p>
+          <p class="text-xs text-slate-600">${schedule.tanggal} | ${schedule.sesi} | ${schedule.lokasi}</p>
+          <p class="text-xs text-slate-600 mt-1">Paket: ${schedule.paketNomor}</p>
+        </div>`;
+      }).join('');
+    }
+
+    function renderUserHistory() {
+      const container = document.getElementById('userHistoryTable');
+      const userBorrowings = storage.borrowings.filter(b => b.userId === storage.currentUser.id);
+      if (userBorrowings.length === 0) {
+        container.innerHTML = '<tr><td colspan="5" class="px-4 py-2 text-center text-slate-600">Belum ada riwayat</td></tr>';
+        return;
+      }
+      container.innerHTML = userBorrowings.map(b => {
+        const schedule = storage.schedules.find(s => s.id === b.scheduleId);
+        const item = schedule ? storage.items.find(i => i.id === schedule.itemId) : null;
+        return `<tr>
+          <td class="px-4 py-2">${item ? item.nama : '-'}</td>
+          <td class="px-4 py-2 text-xs">${schedule ? schedule.tanggal : '-'}</td>
+          <td class="px-4 py-2"><span class="inline-block px-2 py-1 rounded text-xs font-medium ${b.status === 'AKTIF' ? 'bg-yellow-100 text-yellow-800' : b.status === 'SELESAI' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}">${b.status}</span></td>
+          <td class="px-4 py-2 text-xs">${b.buktiPinjam}</td>
+          <td class="px-4 py-2 text-xs">${b.status === 'MENUNGGU_VERIFIKASI' ? '<span class="text-amber-600 font-medium">Menunggu Verifikasi</span>' : b.status === 'SELESAI' ? '✓' : '-'}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    function updateBorrowingForm() {
+      const select = document.getElementById('borrowingScheduleId');
+      select.innerHTML = '<option value="">-- Pilih Jadwal --</option>' + storage.schedules.map(s => {
+        const item = storage.items.find(i => i.id === s.itemId);
+        return `<option value="${s.id}">${item ? item.nama : 'Alat'} - ${s.tanggal} ${s.sesi}</option>`;
+      }).join('');
+    }
+
+    function updateReportForm() {
+      const select = document.getElementById('reportPeminjamanId');
+      const active = storage.borrowings.filter(b => b.userId === storage.currentUser.id && b.status === 'AKTIF');
+      select.innerHTML = '<option value="">-- Pilih Peminjaman --</option>' + active.map(b => {
+        const schedule = storage.schedules.find(s => s.id === b.scheduleId);
+        const item = schedule ? storage.items.find(i => i.id === schedule.itemId) : null;
+        return `<option value="${b.id}">${item ? item.nama : 'Alat'}</option>`;
+      }).join('');
+    }
+
+    function renderAdminDashboard() {
+      renderAdminItems();
+      renderAdminSchedules();
+      renderAdminBorrowings();
+      renderAdminReports();
+      renderAdminVerifications();
+      updateScheduleItemSelect();
+      updateAdminStats();
+    }
+
+    function updateAdminStats() {
+      const borrowed = storage.borrowings.filter(b => b.status === 'AKTIF').length;
+      document.getElementById('adminBorrowedCount').textContent = borrowed;
+      const reports = storage.reports.filter(r => r.status === 'PENDING').length;
+      document.getElementById('adminReportCount').textContent = reports;
+    }
+
+    function renderAdminBorrowings() {
+      const container = document.getElementById('adminBorrowingsList');
+      const active = storage.borrowings.filter(b => b.status === 'AKTIF');
+      if (active.length === 0) {
+        container.innerHTML = '<p class="text-slate-600 text-sm">Tidak ada peminjaman aktif</p>';
+        return;
+      }
+      container.innerHTML = active.map(b => {
+        const schedule = storage.schedules.find(s => s.id === b.scheduleId);
+        const item = schedule ? storage.items.find(i => i.id === schedule.itemId) : null;
+        return `<div class="border border-slate-200 rounded-lg p-3 bg-yellow-50">
+          <p class="font-semibold text-slate-900 text-sm">${item ? item.nama : 'Alat'}</p>
+          <p class="text-xs text-slate-600">User ID: ${b.userId} | Bukti: ${b.buktiPinjam}</p>
+          <p class="text-xs text-slate-600">Jadwal: ${schedule ? schedule.tanggal + ' ' + schedule.sesi : '-'}</p>
+        </div>`;
+      }).join('');
+    }
+
+    function renderAdminReports() {
+      const container = document.getElementById('adminReportsList');
+      const pending = storage.reports.filter(r => r.status === 'PENDING');
+      if (pending.length === 0) {
+        container.innerHTML = '<p class="text-slate-600 text-sm">Tidak ada laporan kendala</p>';
+        return;
+      }
+      container.innerHTML = pending.map(r => {
+        return `<div class="border-l-4 border-red-500 bg-red-50 p-3 rounded">
+          <p class="font-semibold text-slate-900 text-sm">User ${r.userId}</p>
+          <p class="text-xs text-slate-600 mt-1">${r.pesan}</p>
+          <p class="text-xs text-slate-600 mt-1">Tanggal: ${new Date(r.tanggal).toLocaleString()}</p>
+        </div>`;
+      }).join('');
+    }
+
+    function renderAdminVerifications() {
+      const container = document.getElementById('adminVerificationsList');
+      const pending = storage.borrowings.filter(b => b.status === 'MENUNGGU_VERIFIKASI');
+      if (pending.length === 0) {
+        container.innerHTML = '<p class="text-slate-600 text-sm">Tidak ada pengembalian menunggu verifikasi</p>';
+        return;
+      }
+      container.innerHTML = pending.map(b => {
+        const schedule = storage.schedules.find(s => s.id === b.scheduleId);
+        const item = schedule ? storage.items.find(i => i.id === schedule.itemId) : null;
+        return `<div class="border border-slate-200 rounded-lg p-3 bg-blue-50">
+          <p class="font-semibold text-slate-900 text-sm">${item ? item.nama : 'Alat'} - User ${b.userId}</p>
+          <p class="text-xs text-slate-600">Bukti Kembali: ${b.buktiKembali}</p>
+          <button onclick="verifyReturn(${b.id})" class="mt-2 px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700">Verifikasi Selesai</button>
+        </div>`;
+      }).join('');
+    }
+
+    loadStorage();
+    if (storage.currentUser) {
+      storage.currentUser.role === 'ADMIN' ? showAdminPage() : showUserPage();
+    } else {
+      showLoginPage();
+    }
+  </script>
 </body>
 </html>
