@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Manajemen Peminjaman Alat</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-900">
+  <div class="max-w-7xl mx-auto p-4">
+    <header class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
+      <div>
+        <h1 class="text-3xl font-semibold">Manajemen Peminjaman Alat</h1>
+        <p class="text-slate-600 mt-2">Prototipe client-only dengan penyimpanan di localStorage.</p>
+      </div>
+      <button id="btnLogout" class="hidden rounded-xl bg-red-600 px-4 py-2 text-white hover:bg-red-700">Sign Out</button>
+    </header>
+
+    <main>
+      <section id="view-login" class="min-h-[70vh] flex items-center justify-center">
+        <div class="w-full max-w-md rounded-3xl bg-white p-8 shadow-xl">
+          <h2 class="text-2xl font-semibold mb-4">Login</h2>
+          <form id="loginForm" class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-700">Username</label>
+              <input id="username" class="mt-1 w-full rounded-2xl border border-slate-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="user atau admin" required />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700">Password</label>
+              <input id="password" type="password" class="mt-1 w-full rounded-2xl border border-slate-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="user atau admin" required />
+            </div>
+            <button type="submit" class="w-full rounded-2xl bg-indigo-600 px-4 py-3 text-white hover:bg-indigo-700">Sign In</button>
+            <p id="loginError" class="text-sm text-red-600"></p>
+          </form>
+          <div class="mt-4 rounded-2xl bg-slate-100 p-4 text-sm text-slate-700">
+            <p><strong>Admin:</strong> admin / admin</p>
+            <p><strong>User:</strong> user / user</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-user" class="hidden space-y-6">
+        <div class="grid gap-4 lg:grid-cols-3">
+          <article class="rounded-3xl bg-white p-6 shadow-sm">
+            <h2 class="text-xl font-semibold">Status Peminjaman Saya</h2>
+            <div id="userStatus" class="space-y-3 text-sm text-slate-700"></div>
+          </article>
+          <article class="rounded-3xl bg-white p-6 shadow-sm">
+            <h2 class="text-xl font-semibold">Jadwal Peminjaman</h2>
+            <div id="userScheduleList" class="space-y-3 text-sm text-slate-700"></div>
+          </article>
+          <article class="rounded-3xl bg-white p-6 shadow-sm">
+            <h2 class="text-xl font-semibold">Laporan Kendala</h2>
+            <form id="reportForm" class="space-y-3">
+              <select id="reportLoan" class="w-full rounded-2xl border border-slate-300 px-4 py-3"></select>
+              <textarea id="reportMessage" rows="4" class="w-full rounded-2xl border border-slate-300 px-4 py-3" placeholder="Ketik kendala Anda" required></textarea>
+              <button type="submit" class="w-full rounded-2xl bg-yellow-500 px-4 py-3 text-white hover:bg-yellow-600">Kirim Laporan</button>
+              <p id="reportFeedback" class="text-sm text-emerald-600 hidden">Laporan terkirim.</p>
+            </form>
+          </article>
+        </div>
+
+        <div class="grid gap-4 lg:grid-cols-2">
+          <article class="rounded-3xl bg-white p-6 shadow-sm">
+            <h2 class="text-xl font-semibold">Form Bukti Peminjaman</h2>
+            <form id="borrowForm" class="space-y-4 mt-4">
+              <select id="borrowItem" class="w-full rounded-2xl border border-slate-300 px-4 py-3"></select>
+              <input id="borrowDate" type="date" class="w-full rounded-2xl border border-slate-300 px-4 py-3" required />
+              <button type="submit" class="w-full rounded-2xl bg-green-600 px-4 py-3 text-white hover:bg-green-700">Ajukan Peminjaman</button>
+              <p id="borrowFeedback" class="text-sm text-emerald-600 hidden">Permohonan diproses.</p>
+            </form>
+          </article>
+          <article class="rounded-3xl bg-white p-6 shadow-sm">
+            <h2 class="text-xl font-semibold">Form Bukti Pengembalian</h2>
+            <form id="returnForm" class="space-y-4 mt-4">
+              <select id="returnLoan" class="w-full rounded-2xl border border-slate-300 px-4 py-3"></select>
+              <input id="returnDate" type="date" class="w-full rounded-2xl border border-slate-300 px-4 py-3" required />
+              <button type="submit" class="w-full rounded-2xl bg-orange-500 px-4 py-3 text-white hover:bg-orange-600">Kirim Bukti Pengembalian</button>
+              <p id="returnFeedback" class="text-sm text-emerald-600 hidden">Pengembalian terkirim.</p>
+            </form>
+          </article>
+        </div>
+
+        <article class="rounded-3xl bg-white p-6 shadow-sm">
+          <h2 class="text-xl font-semibold">History Peminjaman</h2>
+          <div id="userHistory" class="mt-4 space-y-3 text-sm text-slate-700"></div>
+        </article>
+      </section>
+
+      <section id="view-admin" class="hidden space-y-6">
+        <div class="grid gap-4 lg:grid-cols-3">
+          <article class="rounded-3xl bg-white p-6 shadow-sm">
+            <h2 class="text-xl font-semibold">Ringkasan</h2>
+            <div class="mt-4 space-y-3 text-sm text-slate-700">
+              <div>Total Alat: <span id="adminTotalItems" class="font-semibold"></span></div>
+              <div>Alat Tersedia: <span id="adminAvailableItems" class="font-semibold"></span></div>
+              <div>Alat Dipinjam: <span id="adminBorrowedItems" class="font-semibold"></span></div>
+              <div>Notifikasi Kendala: <span id="adminReportCount" class="font-semibold"></span></div>
+            </div>
+          </article>
+          <article class="rounded-3xl bg-white p-6 shadow-sm lg:col-span-2">
+            <h2 class="text-xl font-semibold">Laporan Kendala</h2>
+            <div id="adminReports" class="mt-4 space-y-3 text-sm text-slate-700"></div>
+          </article>
+        </div>
+
+        <div class="grid gap-4 lg:grid-cols-2">
+          <article class="rounded-3xl bg-white p-6 shadow-sm">
+            <h2 class="text-xl font-semibold">CRUD Inventaris</h2>
+            <form id="itemFormAdmin" class="space-y-4 mt-4">
+              <input id="adminItemName" class="w-full rounded-2xl border border-slate-300 px-4 py-3" placeholder="Nama Alat" required />
+              <button type="submit" class="w-full rounded-2xl bg-blue-600 px-4 py-3 text-white hover:bg-blue-700">Tambah Alat</button>
+            </form>
+            <div id="adminInventory" class="mt-4 space-y-3 text-sm text-slate-700"></div>
+          </article>
+          <article class="rounded-3xl bg-white p-6 shadow-sm">
+            <h2 class="text-xl font-semibold">CRUD Jadwal</h2>
+            <form id="scheduleFormAdmin" class="space-y-4 mt-4">
+              <input id="adminScheduleDate" type="date" class="w-full rounded-2xl border border-slate-300 px-4 py-3" required />
+              <input id="adminScheduleLocation" class="w-full rounded-2xl border border-slate-300 px-4 py-3" placeholder="Lokasi" required />
+              <input id="adminScheduleSession" class="w-full rounded-2xl border border-slate-300 px-4 py-3" placeholder="Sesi" required />
+              <input id="adminSchedulePackage" class="w-full rounded-2xl border border-slate-300 px-4 py-3" placeholder="Paket Nomor Alat" required />
+              <button type="submit" class="w-full rounded-2xl bg-indigo-600 px-4 py-3 text-white hover:bg-indigo-700">Tambah Jadwal</button>
+            </form>
+            <div id="adminSchedules" class="mt-4 space-y-3 text-sm text-slate-700"></div>
+          </article>
+        </div>
+
+        <article class="rounded-3xl bg-white p-6 shadow-sm">
+          <h2 class="text-xl font-semibold">Verifikasi Pengembalian</h2>
+          <div id="adminVerifications" class="mt-4 space-y-3 text-sm text-slate-700"></div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const STORAGE = {
+      currentUser: 'pm_current_user',
+      items: 'pm_inventory',
+      schedules: 'pm_schedules',
+      loans: 'pm_loans',
+      reports: 'pm_reports'
+    };
+
+    const CREDENTIALS = {
+      user: { username: 'user', password: 'user', role: 'user' },
+      admin: { username: 'admin', password: 'admin', role: 'admin' }
+    };
+
+    const loginForm = document.getElementById('loginForm');
+    const btnLogout = document.getElementById('btnLogout');
+    const loginError = document.getElementById('loginError');
+
+    const borrowItem = document.getElementById('borrowItem');
+    const borrowDate = document.getElementById('borrowDate');
+    const borrowForm = document.getElementById('borrowForm');
+    const borrowFeedback = document.getElementById('borrowFeedback');
+
+    const returnLoan = document.getElementById('returnLoan');
+    const returnDate = document.getElementById('returnDate');
+    const returnForm = document.getElementById('returnForm');
+    const returnFeedback = document.getElementById('returnFeedback');
+
+    const reportForm = document.getElementById('reportForm');
+    const reportLoan = document.getElementById('reportLoan');
+    const reportMessage = document.getElementById('reportMessage');
+    const reportFeedback = document.getElementById('reportFeedback');
+
+    const userStatus = document.getElementById('userStatus');
+    const userScheduleList = document.getElementById('userScheduleList');
+    const userHistory = document.getElementById('userHistory');
+
+    const adminTotalItems = document.getElementById('adminTotalItems');
+    const adminAvailableItems = document.getElementById('adminAvailableItems');
+    const adminBorrowedItems = document.getElementById('adminBorrowedItems');
+    const adminReportCount = document.getElementById('adminReportCount');
+    const adminReports = document.getElementById('adminReports');
+    const adminInventory = document.getElementById('adminInventory');
+    const adminSchedules = document.getElementById('adminSchedules');
+    const adminVerifications = document.getElementById('adminVerifications');
+    const itemFormAdmin = document.getElementById('itemFormAdmin');
+    const adminItemName = document.getElementById('adminItemName');
+    const scheduleFormAdmin = document.getElementById('scheduleFormAdmin');
+    const adminScheduleDate = document.getElementById('adminScheduleDate');
+    const adminScheduleLocation = document.getElementById('adminScheduleLocation');
+    const adminScheduleSession = document.getElementById('adminScheduleSession');
+    const adminSchedulePackage = document.getElementById('adminSchedulePackage');
+
+    function readStorage(key) {
+      try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch (e) { return null; }
+    }
+    function writeStorage(key, value) {
+      localStorage.setItem(key, JSON.stringify(value));
+    }
+    function removeStorage(key) {
+      localStorage.removeItem(key);
+    }
+
+    function seedData() {
+      if (!readStorage(STORAGE.items)) {
+        writeStorage(STORAGE.items, [
+          { id: 1, name: 'Proyektor A', status: 'available' },
+          { id: 2, name: 'Laptop 01', status: 'available' },
+          { id: 3, name: 'Kamera DSLR', status: 'available' }
+        ]);
+      }
+      if (!readStorage(STORAGE.schedules)) {
+        writeStorage(STORAGE.schedules, [
+          { id: 1, date: todayPlus(1), location: 'Lab Multimedia', session: '09:00 - 11:00', packageNumber: 'Paket 1' },
+          { id: 2, date: todayPlus(2), location: 'Lab Komputer', session: '13:00 - 15:00', packageNumber: 'Paket 2' }
+        ]);
+      }
+      if (!readStorage(STORAGE.loans)) writeStorage(STORAGE.loans, []);
+      if (!readStorage(STORAGE.reports)) writeStorage(STORAGE.reports, []);
+    }
+
+    function todayPlus(days) {
+      const d = new Date(); d.setDate(d.getDate() + days); return d.toISOString().slice(0, 10);
+    }
+
+    function currentUser() {
+      return readStorage(STORAGE.currentUser);
+    }
+    function setCurrentUser(user) {
+      writeStorage(STORAGE.currentUser, user);
+    }
+    function clearCurrentUser() {
+      removeStorage(STORAGE.currentUser);
+    }
+
+    function showView(viewId) {
+      document.querySelectorAll('main section').forEach(section => section.classList.add('hidden'));
+      document.getElementById(viewId).classList.remove('hidden');
+      btnLogout.classList.toggle('hidden', viewId === 'view-login');
+    }
+
+    function safe(text) {
+      return String(text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    loginForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      loginError.textContent = '';
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
+      let user = null;
+      if (username === CREDENTIALS.user.username && password === CREDENTIALS.user.password) user = CREDENTIALS.user;
+      if (username === CREDENTIALS.admin.username && password === CREDENTIALS.admin.password) user = CREDENTIALS.admin;
+      if (!user) {
+        loginError.textContent = 'Username atau password salah.';
+        return;
+      }
+      setCurrentUser(user);
+      renderApp();
+    });
+
+    btnLogout.addEventListener('click', () => {
+      clearCurrentUser();
+      renderApp();
+    });
+
+    borrowForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const itemId = Number(borrowItem.value);
+      const date = borrowDate.value;
+      const user = currentUser();
+      if (!itemId || !date || !user) return;
+      const items = readStorage(STORAGE.items) || [];
+      const item = items.find(i => i.id === itemId && i.status === 'available');
+      if (!item) return;
+      item.status = 'borrowed';
+      writeStorage(STORAGE.items, items);
+      const loans = readStorage(STORAGE.loans) || [];
+      loans.unshift({ id: Date.now(), username: user.username, itemId: item.id, itemName: item.name, borrowDate: date, returnDate: null, status: 'borrowed' });
+      writeStorage(STORAGE.loans, loans);
+      borrowFeedback.classList.remove('hidden');
+      setTimeout(() => borrowFeedback.classList.add('hidden'), 1600);
+      borrowForm.reset();
+      renderUserDashboard(); renderAdminStats();
+    });
+
+    returnForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const loanId = Number(returnLoan.value);
+      const date = returnDate.value;
+      const loans = readStorage(STORAGE.loans) || [];
+      const loan = loans.find(l => l.id === loanId && l.status === 'borrowed');
+      if (!loan) return;
+      loan.returnDate = date;
+      loan.status = 'pending_return';
+      writeStorage(STORAGE.loans, loans);
+      returnFeedback.classList.remove('hidden');
+      setTimeout(() => returnFeedback.classList.add('hidden'), 1600);
+      returnForm.reset();
+      renderUserDashboard(); renderAdminStats();
+    });
+
+    reportForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const loanId = Number(reportLoan.value);
+      const message = reportMessage.value.trim();
+      const user = currentUser();
+      if (!loanId || !message || !user) return;
+      const loans = readStorage(STORAGE.loans) || [];
+      const loan = loans.find(l => l.id === loanId && l.username === user.username);
+      if (!loan) return;
+      const reports = readStorage(STORAGE.reports) || [];
+      reports.unshift({ id: Date.now(), username: user.username, itemName: loan.itemName, loanId: loan.id, message, createdAt: new Date().toISOString(), resolved: false });
+      writeStorage(STORAGE.reports, reports);
+      reportFeedback.classList.remove('hidden');
+      setTimeout(() => reportFeedback.classList.add('hidden'), 1600);
+      reportForm.reset();
+      renderAdminReports();
+    });
+
+    itemFormAdmin.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const name = adminItemName.value.trim();
+      if (!name) return;
+      const items = readStorage(STORAGE.items) || [];
+      const nextId = items.length ? Math.max(...items.map(i => i.id)) + 1 : 1;
+      items.unshift({ id: nextId, name, status: 'available' });
+      writeStorage(STORAGE.items, items);
+      adminItemName.value = '';
+      renderAdminInventory(); renderAdminStats(); renderUserBorrowOptions(); renderAdminScheduleOptions();
+    });
+
+    scheduleFormAdmin.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const date = adminScheduleDate.value;
+      const location = adminScheduleLocation.value.trim();
+      const session = adminScheduleSession.value.trim();
+      const packageNumber = adminSchedulePackage.value.trim();
+      if (!date || !location || !session || !packageNumber) return;
+      const schedules = readStorage(STORAGE.schedules) || [];
+      const nextId = schedules.length ? Math.max(...schedules.map(s => s.id)) + 1 : 1;
+      schedules.unshift({ id: nextId, date, location, session, packageNumber });
+      writeStorage(STORAGE.schedules, schedules);
+      scheduleFormAdmin.reset();
+      renderAdminSchedules(); renderUserSchedules();
+    });
+
+    function renderApp() {
+      seedData();
+      renderNav();
+      const user = currentUser();
+      if (!user) {
+        showView('view-login');
+        return;
+      }
+      if (user.role === 'admin') {
+        showView('view-admin');
+        renderAdminStats(); renderAdminReports(); renderAdminInventory(); renderAdminSchedules(); renderAdminVerifications();
+      } else {
+        showView('view-user');
+        renderUserDashboard();
+      }
+    }
+
+    function renderUserDashboard() {
+      renderUserStatus(); renderUserSchedules(); renderUserHistory(); renderUserBorrowOptions(); renderUserReturnOptions(); renderReportOptions();
+    }
+
+    function renderUserStatus() {
+      const user = currentUser();
+      const loans = (readStorage(STORAGE.loans) || []).filter(l => l.username === user.username);
+      if (!loans.length) {
+        userStatus.innerHTML = '<p class="text-sm text-slate-600">Tidak ada peminjaman aktif.</p>';
+        return;
+      }
+      userStatus.innerHTML = loans.map(l => {
+        const badge = l.status === 'borrowed' ? '<span class="text-blue-600">Dipinjam</span>' : l.status === 'pending_return' ? '<span class="text-orange-600">Menunggu Verifikasi</span>' : '<span class="text-green-600">Selesai</span>';
+        return `<div class="rounded-2xl border border-slate-200 p-4 bg-slate-50">
+          <div class="flex items-center justify-between gap-3"><strong>${safe(l.itemName)}</strong>${badge}</div>
+          <p class="text-sm text-slate-600">Pinjam: ${safe(l.borrowDate)} ${l.returnDate ? '• Kembali: ' + safe(l.returnDate) : ''}</p>
+        </div>`;
+      }).join('');
+    }
+
+    function renderUserSchedules() {
+      const schedules = readStorage(STORAGE.schedules) || [];
+      if (!schedules.length) {
+        userScheduleList.innerHTML = '<p class="text-sm text-slate-600">Tidak ada jadwal tersedia.</p>';
+        return;
+      }
+      userScheduleList.innerHTML = schedules.map(s => `<div class="rounded-2xl border border-slate-200 p-4 bg-slate-50">
+          <p class="font-semibold">${safe(s.packageNumber)}</p>
+          <p class="text-sm text-slate-600">${safe(s.date)} • ${safe(s.location)} • ${safe(s.session)}</p>
+        </div>`).join('');
+    }
+
+    function renderUserHistory() {
+      const user = currentUser();
+      const loans = (readStorage(STORAGE.loans) || []).filter(l => l.username === user.username);
+      if (!loans.length) {
+        userHistory.innerHTML = '<p class="text-sm text-slate-600">Belum ada riwayat peminjaman.</p>';
+        return;
+      }
+      userHistory.innerHTML = loans.map(l => `<div class="rounded-2xl border border-slate-200 p-4 bg-slate-50">
+          <div class="flex items-center justify-between gap-3"><strong>${safe(l.itemName)}</strong><span class="text-xs text-slate-500">${safe(l.status)}</span></div>
+          <p class="text-sm text-slate-600">Pinjam: ${safe(l.borrowDate)} • Kembali: ${safe(l.returnDate || '-')}</p>
+        </div>`).join('');
+    }
+
+    function renderUserBorrowOptions() {
+      const items = (readStorage(STORAGE.items) || []).filter(i => i.status === 'available');
+      borrowItem.innerHTML = items.length ? items.map(i => `<option value="${i.id}">${safe(i.name)}</option>`).join('') : '<option value="">Tidak ada alat tersedia</option>';
+    }
+
+    function renderUserReturnOptions() {
+      const user = currentUser();
+      const loans = (readStorage(STORAGE.loans) || []).filter(l => l.username === user.username && l.status === 'borrowed');
+      returnLoan.innerHTML = loans.length ? loans.map(l => `<option value="${l.id}">${safe(l.itemName)} • ${safe(l.borrowDate)}</option>`).join('') : '<option value="">Tidak ada peminjaman aktif</option>';
+    }
+
+    function renderReportOptions() {
+      const user = currentUser();
+      const loans = (readStorage(STORAGE.loans) || []).filter(l => l.username === user.username);
+      reportLoan.innerHTML = loans.length ? loans.map(l => `<option value="${l.id}">${safe(l.itemName)} • ${safe(l.status)}</option>`).join('') : '<option value="">Tidak ada peminjaman</option>';
+    }
+
+    function renderAdminStats() {
+      const items = readStorage(STORAGE.items) || [];
+      const loans = readStorage(STORAGE.loans) || [];
+      const reports = readStorage(STORAGE.reports) || [];
+      adminTotalItems.textContent = items.length;
+      adminAvailableItems.textContent = items.filter(i => i.status === 'available').length;
+      adminBorrowedItems.textContent = items.filter(i => i.status === 'borrowed').length;
+      adminReportCount.textContent = reports.length;
+    }
+
+    function renderAdminReports() {
+      const reports = readStorage(STORAGE.reports) || [];
+      if (!reports.length) {
+        adminReports.innerHTML = '<p class="text-sm text-slate-600">Tidak ada laporan kendala.</p>';
+        return;
+      }
+      adminReports.innerHTML = reports.map(r => `<div class="rounded-2xl border border-slate-200 p-4 bg-slate-50">
+          <p class="font-semibold">${safe(r.itemName)} oleh ${safe(r.username)}</p>
+          <p class="text-sm text-slate-600">${safe(r.message)}</p>
+          <p class="text-xs text-slate-500">${new Date(r.createdAt).toLocaleString()}</p>
+        </div>`).join('');
+    }
+
+    function renderAdminInventory() {
+      const items = readStorage(STORAGE.items) || [];
+      if (!items.length) {
+        adminInventory.innerHTML = '<p class="text-sm text-slate-600">Inventaris kosong.</p>';
+        return;
+      }
+      adminInventory.innerHTML = items.map(item => `<div class="rounded-2xl border border-slate-200 p-4 bg-slate-50 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p class="font-semibold">${safe(item.name)}</p>
+            <p class="text-sm text-slate-600">Status: ${safe(item.status)}</p>
+          </div>
+          <button class="rounded-2xl bg-red-600 px-4 py-2 text-white hover:bg-red-700" onclick="deleteItem(${item.id})">Hapus</button>
+        </div>`).join('');
+    }
+
+    function renderAdminSchedules() {
+      const schedules = readStorage(STORAGE.schedules) || [];
+      if (!schedules.length) {
+        adminSchedules.innerHTML = '<p class="text-sm text-slate-600">Belum ada jadwal.</p>';
+        return;
+      }
+      adminSchedules.innerHTML = schedules.map(s => `<div class="rounded-2xl border border-slate-200 p-4 bg-slate-50 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p class="font-semibold">${safe(s.packageNumber)}</p>
+            <p class="text-sm text-slate-600">${safe(s.date)} • ${safe(s.location)} • ${safe(s.session)}</p>
+          </div>
+          <button class="rounded-2xl bg-red-600 px-4 py-2 text-white hover:bg-red-700" onclick="deleteSchedule(${s.id})">Hapus</button>
+        </div>`).join('');
+    }
+
+    function renderAdminVerifications() {
+      const loans = (readStorage(STORAGE.loans) || []).filter(l => l.status === 'pending_return');
+      if (!loans.length) {
+        adminVerifications.innerHTML = '<p class="text-sm text-slate-600">Tidak ada pengembalian menunggu verifikasi.</p>';
+        return;
+      }
+      adminVerifications.innerHTML = loans.map(l => `<div class="rounded-2xl border border-slate-200 p-4 bg-slate-50">
+          <p class="font-semibold">${safe(l.itemName)} oleh ${safe(l.username)}</p>
+          <p class="text-sm text-slate-600">Pengembalian: ${safe(l.returnDate)}</p>
+          <button class="mt-3 rounded-2xl bg-emerald-600 px-4 py-2 text-white hover:bg-emerald-700" onclick="verifyReturn(${l.id})">Verifikasi Selesai</button>
+        </div>`).join('');
+    }
+
+    function deleteItem(id) {
+      let items = readStorage(STORAGE.items) || [];
+      items = items.filter(i => i.id !== id);
+      writeStorage(STORAGE.items, items);
+      renderAdminInventory(); renderUserBorrowOptions(); renderAdminStats();
+    }
+
+    function deleteSchedule(id) {
+      let schedules = readStorage(STORAGE.schedules) || [];
+      schedules = schedules.filter(s => s.id !== id);
+      writeStorage(STORAGE.schedules, schedules);
+      renderAdminSchedules(); renderUserSchedules();
+    }
+
+    function verifyReturn(loanId) {
+      const loans = readStorage(STORAGE.loans) || [];
+      const loan = loans.find(l => l.id === loanId);
+      if (!loan) return;
+      loan.status = 'returned';
+      const items = readStorage(STORAGE.items) || [];
+      const item = items.find(i => i.id === loan.itemId);
+      if (item) item.status = 'available';
+      writeStorage(STORAGE.loans, loans);
+      writeStorage(STORAGE.items, items);
+      renderAdminVerifications(); renderAdminStats(); renderUserDashboard();
+    }
+
+    window.deleteItem = deleteItem;
+    window.deleteSchedule = deleteSchedule;
+    window.verifyReturn = verifyReturn;
+
+    function renderUserBorrowOptions() {
+      const items = (readStorage(STORAGE.items) || []).filter(i => i.status === 'available');
+      borrowItem.innerHTML = items.length ? items.map(item => `<option value="${item.id}">${safe(item.name)}</option>`).join('') : '<option value="">Tidak ada alat tersedia</option>';
+    }
+
+    function renderUserReturnOptions() {
+      const user = currentUser();
+      const loans = (readStorage(STORAGE.loans) || []).filter(l => l.username === user.username && l.status === 'borrowed');
+      returnLoan.innerHTML = loans.length ? loans.map(item => `<option value="${item.id}">${safe(item.itemName)} • ${safe(item.borrowDate)}</option>`).join('') : '<option value="">Tidak ada peminjaman aktif</option>';
+    }
+
+    function renderAdminScheduleOptions() {
+      /* no-op for now; only used to update user schedule list after inventory changes */
+    }
+
+    function renderNav() {
+      btnLogout.classList.toggle('hidden', !currentUser());
+    }
+
+    seedData();
+    renderApp();
+  </script>
+</body>
+</html>

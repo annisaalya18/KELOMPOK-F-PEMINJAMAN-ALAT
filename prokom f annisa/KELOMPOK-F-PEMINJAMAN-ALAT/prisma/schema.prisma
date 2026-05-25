@@ -1,0 +1,67 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int          @id @default(autoincrement())
+  name      String
+  email     String       @unique
+  password  String
+  role      String       @default("USER")
+  borrowings Peminjaman[]
+  reports   LaporanKendala[]
+}
+
+model Alat {
+  id          Int          @id @default(autoincrement())
+  nama        String
+  kategori    String
+  status      String       @default("TERSEDIA")
+  jadwals     Jadwal[]
+  borrowings  Peminjaman[]
+}
+
+model Jadwal {
+  id          Int          @id @default(autoincrement())
+  tanggal     DateTime
+  lokasi      String
+  sesi        String
+  paketNomor  String
+  alat        Alat         @relation(fields: [alatId], references: [id])
+  alatId       Int
+  peminjaman  Peminjaman?
+}
+
+model Peminjaman {
+  id             Int            @id @default(autoincrement())
+  user           User           @relation(fields: [userId], references: [id])
+  userId         Int
+  alat           Alat           @relation(fields: [alatId], references: [id])
+  alatId         Int
+  jadwal         Jadwal         @relation(fields: [jadwalId], references: [id])
+  jadwalId       Int            @unique
+  status         String         @default("AKTIF")
+  buktiPinjam    String?
+  buktiKembali   String?
+  catatanPinjam  String?
+  catatanKembali String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  report         LaporanKendala[]
+}
+
+model LaporanKendala {
+  id            Int        @id @default(autoincrement())
+  user          User       @relation(fields: [userId], references: [id])
+  userId        Int
+  peminjaman    Peminjaman @relation(fields: [peminjamanId], references: [id])
+  peminjamanId  Int
+  pesan         String
+  resolved      Boolean    @default(false)
+  createdAt     DateTime   @default(now())
+}
